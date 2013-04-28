@@ -60,7 +60,7 @@ thread_count.times do |count|
     while true
       # Dequeue the latest file and delete it. (Will block until it gets a new file.)
       file = queue.deq
-      return if file == :EOF
+      break if file == :EOF
       # Upload this file to S3. file.body?
       tf = target.files.get(file.key)
       if tf && tf.etag == file.etag
