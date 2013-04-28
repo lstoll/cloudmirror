@@ -84,3 +84,5 @@ threads.each do |t|
     puts "Failure on thread #{t[:name]}: #{e.message}"
   end
 end
+
+puts "=== DONE ==="
