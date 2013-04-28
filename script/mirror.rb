@@ -54,7 +54,7 @@ end
 thread_count.times do |count|
   threads << Thread.new(count) do |number|
     target = rs.directories.get(out_dir)
-    Thread.current[:name] = "get files(#{number})"
+    Thread.current[:name] = "move files(#{number})"
     puts "...started thread '#{Thread.current[:name]}'...\n"
     # Dequeue until EOF.
     while true
@@ -62,8 +62,13 @@ thread_count.times do |count|
       file = queue.deq
       return if file == :EOF
       # Upload this file to S3. file.body?
-      semaphore.synchronize { puts "Copying file #{file.key}" }
-      target.files.create(:key => file.key, :body => file.body, :etag => file.etag)
+      tf = target.files.get(file.key)
+      if tf && tf.etag == file.etag
+        semaphore.synchronize { puts "Skipping file #{file.key}, it exists and md5 matches" }
+      else
+        semaphore.synchronize { puts "Copying file #{file.key}" }
+        target.files.create(:key => file.key, :body => file.body, :etag => file.etag)
+      end
       # Increment the global synchronized counter.
       semaphore.synchronize {total_fetched += 1}
       puts "Moved #{total_fetched} out #{total_listed}\n" if (rand(100) == 1)
